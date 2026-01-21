@@ -13,10 +13,10 @@ import com.tyme.solar.SolarTime
  */
 abstract class AbstractChildLimitProvider: ChildLimitProvider {
     fun next(birthTime: SolarTime, addYear: Int, addMonth: Int, addDay: Int, addHour: Int, addMinute: Int, addSecond: Int): ChildLimitInfo {
-        var d = birthTime.getDay() + addDay
-        var h = birthTime.getHour() + addHour
-        var mi = birthTime.getMinute() + addMinute
-        var s = birthTime.getSecond() + addSecond
+        var d = birthTime.day + addDay
+        var h = birthTime.hour + addHour
+        var mi = birthTime.minute + addMinute
+        var s = birthTime.second + addSecond
         mi += s / 60
         s %= 60
         h += mi / 60
@@ -24,7 +24,7 @@ abstract class AbstractChildLimitProvider: ChildLimitProvider {
         d += h / 24
         h %= 24
 
-        var sm = SolarMonth(birthTime.getYear() + addYear, birthTime.getMonth()).next(addMonth)
+        var sm = SolarMonth(birthTime.year + addYear, birthTime.month).next(addMonth)
 
         var dc = sm.getDayCount()
         while (d > dc) {
@@ -32,7 +32,7 @@ abstract class AbstractChildLimitProvider: ChildLimitProvider {
             sm = sm.next(1)
             dc = sm.getDayCount()
         }
-        return ChildLimitInfo(birthTime, SolarTime(sm.getYear(), sm.getMonth(), d, h, mi, s), addYear, addMonth, addDay, addHour, addMinute)
+        return ChildLimitInfo(birthTime, SolarTime(sm.year, sm.month, d, h, mi, s), addYear, addMonth, addDay, addHour, addMinute)
     }
 
     abstract override fun getInfo(birthTime: SolarTime, term: SolarTerm): ChildLimitInfo

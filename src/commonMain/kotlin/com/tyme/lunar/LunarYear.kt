@@ -1,11 +1,11 @@
 package com.tyme.lunar
 
-import com.tyme.AbstractTyme
 import com.tyme.culture.Direction
 import com.tyme.culture.KitchenGodSteed
 import com.tyme.culture.Twenty
 import com.tyme.culture.star.nine.NineStar
 import com.tyme.sixtycycle.SixtyCycle
+import com.tyme.unit.YearUnit
 import kotlin.jvm.JvmStatic
 import kotlin.math.floor
 
@@ -15,17 +15,11 @@ import kotlin.math.floor
  * @author 6tail
  */
 class LunarYear(
-    /** 年 */
-    private var year: Int
-) : AbstractTyme() {
+    year: Int
+) : YearUnit(year) {
 
     init {
-        require(year in -1 .. 9999) { "illegal lunar year: $year" }
-    }
-
-    /** 年 */
-    fun getYear(): Int {
-        return year
+        validate(year)
     }
 
     /**
@@ -134,7 +128,7 @@ class LunarYear(
     fun getMonths(): List<LunarMonth> {
         val l: MutableList<LunarMonth> = ArrayList(13)
         var m: LunarMonth = getFirstMonth()
-        while (m.getYear() == year) {
+        while (m.year == year) {
             l.add(m)
             m = m.next(1)
         }
@@ -193,6 +187,13 @@ class LunarYear(
                     l.add(n)
                 }
                 LEAP.add(l)
+            }
+        }
+
+        @JvmStatic
+        fun validate(year: Int) {
+            if (year < -1 || year > 9999) {
+                throw IllegalArgumentException("illegal lunar year: $year")
             }
         }
 

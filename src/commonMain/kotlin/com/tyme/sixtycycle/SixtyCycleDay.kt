@@ -6,14 +6,10 @@ import com.tyme.culture.fetus.FetusDay
 import com.tyme.culture.star.nine.NineStar
 import com.tyme.culture.star.twelve.TwelveStar
 import com.tyme.culture.star.twentyeight.TwentyEightStar
-import com.tyme.lunar.LunarDay
-import com.tyme.lunar.LunarMonth
-import com.tyme.lunar.LunarYear
 import com.tyme.solar.SolarDay
 import com.tyme.solar.SolarTerm
 import com.tyme.solar.SolarTime
 import kotlin.jvm.JvmStatic
-import kotlin.math.floor
 
 /**
  * 干支日（立春换年，节令换月）
@@ -40,30 +36,12 @@ class SixtyCycleDay: AbstractTyme {
      * @param solarDay 公历日
      */
     constructor(solarDay: SolarDay) {
-        val solarYear: Int = solarDay.getYear()
-        val springSolarDay: SolarDay = SolarTerm(solarYear, 3).getSolarDay()
-        val lunarDay: LunarDay = solarDay.getLunarDay()
-        var lunarYear: LunarYear = lunarDay.getLunarMonth().getLunarYear()
-        if (lunarYear.getYear() == solarYear) {
-            if (solarDay.isBefore(springSolarDay)) {
-                lunarYear = lunarYear.next(-1)
-            }
-        } else if (lunarYear.getYear() < solarYear) {
-            if (!solarDay.isBefore(springSolarDay)) {
-                lunarYear = lunarYear.next(1)
-            }
-        }
-        val term: SolarTerm = solarDay.getTerm()
-        var index: Int = term.getIndex() - 3
-        if (index < 0 && term.getSolarDay().isAfter(springSolarDay)) {
-            index += 24
-        }
+        val term = solarDay.getTerm()
+        val index = term.getIndex()
+        val offset = if (index < 3) (if (index == 0) -2 else -1) else ((index - 3) / 2)
         this.solarDay = solarDay
-        month = SixtyCycleMonth(
-            SixtyCycleYear(lunarYear.getYear()),
-            LunarMonth.fromYm(solarYear, 1).getSixtyCycle().next(floor(index * 0.5).toInt())
-        )
-        day = lunarDay.getSixtyCycle()
+        month = SixtyCycleYear.fromYear(term.getYear()).getFirstMonth().next(offset)
+        day = SixtyCycle.fromIndex(solarDay.subtract(SolarDay.fromYmd(2000, 1, 7)))
     }
 
     /**
@@ -144,7 +122,7 @@ class SixtyCycleDay: AbstractTyme {
      */
     fun getNineStar(): NineStar {
         val solar: SolarDay = getSolarDay()
-        val dongZhi = SolarTerm(solar.getYear(), 0)
+        val dongZhi = SolarTerm(solar.year, 0)
         val xiaZhi: SolarTerm = dongZhi.next(12)
         val dongZhi2: SolarTerm = dongZhi.next(24)
         val dongZhiSolar: SolarDay = dongZhi.getSolarDay()
@@ -242,7 +220,7 @@ class SixtyCycleDay: AbstractTyme {
     fun getHours(): List<SixtyCycleHour> {
         val l: MutableList<SixtyCycleHour> = mutableListOf()
         val d: SolarDay = solarDay.next(-1)
-        var h = SixtyCycleHour(SolarTime(d.getYear(), d.getMonth(), d.getDay(), 23, 0, 0))
+        var h = SixtyCycleHour(SolarTime(d.year, d.month, d.day, 23, 0, 0))
         l.add(h)
         for (i in 0 until 11) {
             h = h.next(7200)

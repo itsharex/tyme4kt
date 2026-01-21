@@ -73,7 +73,7 @@ class SolarFestival(
     override fun next(n: Int): SolarFestival? {
         val size = NAMES.size
         val i = index + n
-        return fromIndex((day.getYear() * size + i) / size, indexOf(i, size))
+        return fromIndex((day.year * size + i) / size, indexOf(i, size))
     }
 
     companion object {

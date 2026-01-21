@@ -37,13 +37,13 @@ class LegalHoliday(year: Int, month: Int, day: Int, data: String) : AbstractTyme
     }
 
     override fun toString(): String {
-        return "${day} $name(${if (work) "班" else "休"})"
+        return "$day $name(${if (work) "班" else "休"})"
     }
 
     override fun next(n: Int): LegalHoliday? {
-        val year: Int = this.day.getYear()
-        val month: Int = this.day.getMonth()
-        val day: Int = this.day.getDay()
+        val year: Int = this.day.year
+        val month: Int = this.day.month
+        val day: Int = this.day.day
         if (n == 0) {
             return fromYmd(year, month, day)
         }

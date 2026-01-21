@@ -1,6 +1,5 @@
 package com.tyme.solar
 
-import com.tyme.AbstractTyme
 import com.tyme.culture.Constellation
 import com.tyme.culture.Phase
 import com.tyme.culture.PhaseDay
@@ -23,6 +22,7 @@ import com.tyme.rabbyung.RabByungDay
 import com.tyme.sixtycycle.HideHeavenStem
 import com.tyme.sixtycycle.HideHeavenStemDay
 import com.tyme.sixtycycle.SixtyCycleDay
+import com.tyme.unit.DayUnit
 import kotlin.jvm.JvmStatic
 import kotlin.math.ceil
 
@@ -33,57 +33,17 @@ import kotlin.math.ceil
  * @author 6tail
  */
 class SolarDay(
-    /** 年 */
     year: Int,
-    /** 月 */
     month: Int,
-    /** 日 */
-    private var day: Int
-) : AbstractTyme() {
-
-    /** 公历月 */
-    private var month: SolarMonth
+    day: Int
+) : DayUnit(year, month, day) {
 
     init {
-        require(day >= 1) { "illegal solar day: ${year}-${month}-${day}" }
-        val m = SolarMonth(year, month)
-        if (1582 == year && 10 == month) {
-            require(!((day in 5..14) || day > 31)) { "illegal solar day: ${year}-${month}-${day}" }
-        } else {
-            require(day <= m.getDayCount()) { "illegal solar day: ${year}-${month}-${day}" }
-        }
-        this.month = m
+        validate(year, month, day)
     }
 
     fun getSolarMonth(): SolarMonth {
-        return month
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return month.getYear()
-    }
-
-    /**
-     * 月
-     *
-     * @return 月
-     */
-    fun getMonth(): Int {
-        return month.getMonth()
-    }
-
-    /**
-     * 日
-     *
-     * @return 日
-     */
-    fun getDay(): Int {
-        return day
+        return SolarMonth.fromYm(year, month)
     }
 
     /**
@@ -101,8 +61,8 @@ class SolarDay(
      * @return 星座
      */
     fun getConstellation(): Constellation {
-        val y = getMonth() * 100 + day
-        return Constellation(if (y > 1221 || y < 120) 9 else if (y < 219) 10 else if (y < 321) 11 else if (y < 420) 0 else if (y < 521) 1 else if (y < 622) 2 else if (y < 723) 3 else if (y < 823) 4 else if (y < 923) 5 else if (y < 1024) 6 else if (y < 1123) 7 else 8)
+        val y = month * 100 + day
+        return Constellation(if (y !in 120..1221) 9 else if (y < 219) 10 else if (y < 321) 11 else if (y < 420) 0 else if (y < 521) 1 else if (y < 622) 2 else if (y < 723) 3 else if (y < 823) 4 else if (y < 923) 5 else if (y < 1024) 6 else if (y < 1123) 7 else 8)
     }
 
     override fun getName(): String {
@@ -110,7 +70,7 @@ class SolarDay(
     }
 
     override fun toString(): String {
-        return month.toString() + getName()
+        return getSolarMonth().toString() + getName()
     }
 
     override fun next(n: Int): SolarDay {
@@ -124,14 +84,10 @@ class SolarDay(
      * @return true/false
      */
     fun isBefore(target: SolarDay): Boolean {
-        val aYear: Int = getYear()
-        val bYear: Int = target.getYear()
-        if (aYear != bYear) {
-            return aYear < bYear
+        if (year != target.year) {
+            return year < target.year
         }
-        val aMonth: Int = getMonth()
-        val bMonth: Int = target.getMonth()
-        return if (aMonth != bMonth) aMonth < bMonth else day < target.getDay()
+        return if (month != target.month) month < target.month else day < target.day
     }
 
     /**
@@ -141,14 +97,10 @@ class SolarDay(
      * @return true/false
      */
     fun isAfter(target: SolarDay): Boolean {
-        val aYear: Int = getYear()
-        val bYear: Int = target.getYear()
-        if (aYear != bYear) {
-            return aYear > bYear
+        if (year != target.year) {
+            return year > target.year
         }
-        val aMonth = getMonth()
-        val bMonth = target.getMonth()
-        return if (aMonth != bMonth) aMonth > bMonth else day > target.getDay()
+        return if (month != target.month) month > target.month else day > target.day
     }
 
     /**
@@ -166,13 +118,13 @@ class SolarDay(
      * @return 节气第几天
      */
     fun getTermDay(): SolarTermDay {
-        var y: Int = getYear()
-        var i: Int = getMonth() * 2
+        var y: Int = year
+        var i: Int = month * 2
         if (i == 24) {
             y += 1
             i = 0
         }
-        var term = SolarTerm(y, i)
+        var term = SolarTerm(y, i + 1)
         var day: SolarDay = term.getSolarDay()
         while (isBefore(day)) {
             term = term.next(-1)
@@ -188,9 +140,7 @@ class SolarDay(
      * @return 公历周
      */
     fun getSolarWeek(start: Int): SolarWeek {
-        val y: Int = getYear()
-        val m: Int = getMonth()
-        return SolarWeek(y, m, ceil((day + SolarDay(y, m, 1).getWeek().next(-start).getIndex()) / 7.0).toInt() - 1, start)
+        return SolarWeek(year, month, ceil((day + SolarDay(year, month, 1).getWeek().next(-start).getIndex()) / 7.0).toInt() - 1, start)
     }
 
     /**
@@ -225,7 +175,7 @@ class SolarDay(
      */
     fun getDogDay(): DogDay? {
         // 夏至
-        val xiaZhi = SolarTerm(getYear(), 12)
+        val xiaZhi = SolarTerm(year, 12)
         // 第1个庚日
         var start: SolarDay = xiaZhi.getSolarDay()
         // 第3个庚日，即初伏第1天
@@ -264,7 +214,6 @@ class SolarDay(
      * @return 数九天
      */
     fun getNineDay(): NineDay? {
-        val year: Int = getYear()
         var start: SolarDay = SolarTerm(year + 1, 0).getSolarDay()
         if (isBefore(start)) {
             start = SolarTerm(year, 0).getSolarDay()
@@ -284,7 +233,7 @@ class SolarDay(
      */
     fun getPlumRainDay(): PlumRainDay? {
         // 芒种
-        val grainInEar = SolarTerm(getYear(), 11)
+        val grainInEar = SolarTerm(year, 11)
         var start: SolarDay = grainInEar.getSolarDay()
         // 芒种后的第1个丙日
         start = start.next(start.getLunarDay().getSixtyCycle().getHeavenStem().stepsTo(2))
@@ -345,7 +294,7 @@ class SolarDay(
      * @return 索引
      */
     fun getIndexInYear(): Int {
-        return subtract(SolarDay(getYear(), 1, 1))
+        return subtract(SolarDay(year, 1, 1))
     }
 
     /**
@@ -364,7 +313,7 @@ class SolarDay(
      * @return 儒略日
      */
     fun getJulianDay(): JulianDay {
-        return JulianDay.fromYmdHms(getYear(), getMonth(), day, 0, 0, 0)
+        return JulianDay.fromYmdHms(year, month, day, 0, 0, 0)
     }
 
     /**
@@ -373,13 +322,13 @@ class SolarDay(
      * @return 农历日
      */
     fun getLunarDay(): LunarDay {
-        var m: LunarMonth = LunarMonth.fromYm(getYear(), getMonth())
+        var m: LunarMonth = LunarMonth.fromYm(year, month)
         var days = subtract(m.getFirstJulianDay().getSolarDay())
         while (days < 0) {
             m = m.next(-1)
             days += m.getDayCount()
         }
-        return LunarDay(m.getYear(), m.getMonthWithLeap(), days + 1)
+        return LunarDay(m.year, m.getMonthWithLeap(), days + 1)
     }
 
     /**
@@ -406,7 +355,7 @@ class SolarDay(
      * @return 法定假日
      */
     fun getLegalHoliday(): LegalHoliday? {
-        return LegalHoliday.fromYmd(getYear(), getMonth(), day)
+        return LegalHoliday.fromYmd(year, month, day)
     }
 
     /**
@@ -415,7 +364,7 @@ class SolarDay(
      * @return 公历现代节日
      */
     fun getFestival(): SolarFestival? {
-        return SolarFestival.fromYmd(getYear(), getMonth(), day)
+        return SolarFestival.fromYmd(year, month, day)
     }
 
     /**
@@ -425,7 +374,7 @@ class SolarDay(
      */
     fun getPhaseDay(): PhaseDay {
         val month = getLunarDay().getLunarMonth().next(1)
-        var p = Phase.fromIndex(month.getYear(), month.getMonthWithLeap(), 0)
+        var p = Phase.fromIndex(month.year, month.getMonthWithLeap(), 0)
         var d = p.getSolarDay()
         while (d.isAfter(this)) {
             p = p.next(-1)
@@ -453,6 +402,20 @@ class SolarDay(
 
     companion object {
         val NAMES: Array<String> = arrayOf("1日", "2日", "3日", "4日", "5日", "6日", "7日", "8日", "9日", "10日", "11日", "12日", "13日", "14日", "15日", "16日", "17日", "18日", "19日", "20日", "21日", "22日", "23日", "24日", "25日", "26日", "27日", "28日", "29日", "30日", "31日")
+
+        @JvmStatic
+        fun validate(year: Int, month: Int, day: Int) {
+            if (day < 1) {
+                throw IllegalArgumentException("illegal solar day: ${year}-${month}-${day}")
+            }
+            if (1582 == year && 10 == month) {
+                if ((day in 5..<15) || day > 31) {
+                    throw IllegalArgumentException("illegal solar day: ${year}-${month}-${day}")
+                }
+            } else if (day > SolarMonth(year, month).getDayCount()) {
+                throw IllegalArgumentException("illegal solar day: ${year}-${month}-${day}")
+            }
+        }
 
         @JvmStatic
         fun fromYmd(year: Int, month: Int, day: Int): SolarDay {

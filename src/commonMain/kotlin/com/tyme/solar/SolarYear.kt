@@ -1,7 +1,7 @@
 package com.tyme.solar
 
-import com.tyme.AbstractTyme
 import com.tyme.rabbyung.RabByungYear
+import com.tyme.unit.YearUnit
 import kotlin.jvm.JvmStatic
 
 /**
@@ -9,22 +9,10 @@ import kotlin.jvm.JvmStatic
  *
  * @author 6tail
  */
-class SolarYear(
-    /** 年 */
-    private var year: Int
-) : AbstractTyme() {
+class SolarYear(year: Int) : YearUnit(year) {
 
     init {
-        require(year in 1..9999) { "illegal solar year: $year" }
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return year
+        validate(year)
     }
 
     /**
@@ -116,6 +104,13 @@ class SolarYear(
     }
 
     companion object {
+        @JvmStatic
+        fun validate(year: Int) {
+            if (year !in 1..9999) {
+                throw IllegalArgumentException("illegal solar year: $year")
+            }
+        }
+
         /**
          * 从年初始化
          *

@@ -1,6 +1,6 @@
 package com.tyme.solar
 
-import com.tyme.AbstractTyme
+import com.tyme.unit.YearUnit
 import kotlin.jvm.JvmStatic
 
 /**
@@ -9,18 +9,12 @@ import kotlin.jvm.JvmStatic
  * @author 6tail
  */
 class SolarSeason(
-    /** 年 */
     year: Int,
-    /** 索引，0-3 */
-    private var index: Int
-) : AbstractTyme() {
-
-    /** 年 */
-    private var year: SolarYear
+    val index: Int
+) : YearUnit(year) {
 
     init {
-        require(index in 0..3) { "illegal solar season index: $index" }
-        this.year = SolarYear(year)
+        validate(year, index)
     }
 
     /**
@@ -29,25 +23,7 @@ class SolarSeason(
      * @return 公历年
      */
     fun getSolarYear(): SolarYear {
-        return year
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return year.getYear()
-    }
-
-    /**
-     * 索引
-     *
-     * @return 索引，0-3
-     */
-    fun getIndex(): Int {
-        return index
+        return SolarYear.fromYear(year)
     }
 
     override fun getName(): String {
@@ -55,12 +31,12 @@ class SolarSeason(
     }
 
     override fun toString(): String {
-        return "${year}${getName()}"
+        return "${getSolarYear()}${getName()}"
     }
 
     override fun next(n: Int): SolarSeason {
         val i = index + n
-        return SolarSeason((getYear() * 4 + i) / 4, indexOf(i, 4))
+        return SolarSeason((year * 4 + i) / 4, indexOf(i, 4))
     }
 
     /**
@@ -70,9 +46,8 @@ class SolarSeason(
      */
     fun getMonths(): List<SolarMonth> {
         val l: MutableList<SolarMonth> = ArrayList(3)
-        val y = year.getYear()
         for (i in 1..3) {
-            l.add(SolarMonth(y, index * 3 + i))
+            l.add(SolarMonth(year, index * 3 + i))
         }
         return l
     }
@@ -87,6 +62,14 @@ class SolarSeason(
 
     companion object {
         val NAMES: Array<String> = arrayOf("一季度", "二季度", "三季度", "四季度")
+
+        @JvmStatic
+        fun validate(year: Int, index: Int) {
+            if (index !in 0..3) {
+                throw IllegalArgumentException("illegal solar season index: $index")
+            }
+            SolarYear.validate(year)
+        }
 
         @JvmStatic
         fun fromIndex(year: Int, index: Int): SolarSeason {

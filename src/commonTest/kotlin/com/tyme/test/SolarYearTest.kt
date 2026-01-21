@@ -58,7 +58,7 @@ class SolarYearTest {
             for (week in month.getWeeks(1)) {
                 print(week.getName())
                 for (day in week.getDays()) {
-                    print(" " + day.getDay())
+                    print(" " + day.day)
                 }
                 println()
             }

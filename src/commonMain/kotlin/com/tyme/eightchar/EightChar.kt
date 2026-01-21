@@ -169,7 +169,7 @@ class EightChar: AbstractCulture {
                 term = term.next(m)
             }
             val solarTime: SolarTime = term.getJulianDay().getSolarTime()
-            if (solarTime.getYear() >= startYear) {
+            if (solarTime.year >= startYear) {
                 // 日干支和节令干支的偏移值
                 var solarDay: SolarDay = solarTime.getSolarDay()
                 val d: Int = day.next(-solarDay.getLunarDay().getSixtyCycle().getIndex()).getIndex()
@@ -181,11 +181,11 @@ class EightChar: AbstractCulture {
                     var mi = 0
                     var s = 0
                     // 如果正好是节令当天，且小时和节令的小时数相等的极端情况，把分钟和秒钟带上
-                    if (d == 0 && hour == solarTime.getHour()) {
-                        mi = solarTime.getMinute()
-                        s = solarTime.getSecond()
+                    if (d == 0 && hour == solarTime.hour) {
+                        mi = solarTime.minute
+                        s = solarTime.second
                     }
-                    var time = SolarTime(solarDay.getYear(), solarDay.getMonth(), solarDay.getDay(), hour, mi, s)
+                    var time = SolarTime(solarDay.year, solarDay.month, solarDay.day, hour, mi, s)
                     if (d == 30) {
                         time = time.next(-3600)
                     }

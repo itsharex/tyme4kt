@@ -18,8 +18,8 @@ class LunarSect1ChildLimitProvider: AbstractChildLimitProvider() {
             end = birthTime
             start = termTime
         }
-        val endTimeZhiIndex: Int = if ((end.getHour() == 23)) 11 else end.getLunarHour().getIndexInDay()
-        val startTimeZhiIndex: Int = if ((start.getHour() == 23)) 11 else start.getLunarHour().getIndexInDay()
+        val endTimeZhiIndex: Int = if ((end.hour == 23)) 11 else end.getLunarHour().getIndexInDay()
+        val startTimeZhiIndex: Int = if ((start.hour == 23)) 11 else start.getLunarHour().getIndexInDay()
         // 时辰差
         var hourDiff: Int = endTimeZhiIndex - startTimeZhiIndex
         // 天数差

@@ -1,7 +1,6 @@
 package com.tyme.solar
 
-import com.tyme.AbstractTyme
-import com.tyme.culture.Week
+import com.tyme.unit.WeekUnit
 import kotlin.jvm.JvmStatic
 
 /**
@@ -10,29 +9,13 @@ import kotlin.jvm.JvmStatic
  * @author 6tail
  */
 class SolarWeek(
-    /** 年 */
     year: Int,
-    /** 月 */
     month: Int,
-    /** 索引，0-5 */
-    private var index: Int,
-    /** 起始星期，1234560分别代表星期一至星期天 */
+    index: Int,
     start: Int
-) : AbstractTyme() {
-
-    /** 月 */
-    private var month: SolarMonth
-
-    /** 起始星期 */
-    private var start: Week
-
+) : WeekUnit(year, month, index, start) {
     init {
-        require(index in 0..5) { "illegal solar week index: $index" }
-        require(start in 0..6) { "illegal solar week start: $start" }
-        val m = SolarMonth(year, month)
-        require(index < m.getWeekCount(start)) { "illegal solar week index: $index in month: $m" }
-        this.month = m
-        this.start = Week(start)
+        validate(year, month, index, start)
     }
 
     /**
@@ -41,34 +24,7 @@ class SolarWeek(
      * @return 公历月
      */
     fun getSolarMonth(): SolarMonth {
-        return month
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return  month.getYear()
-    }
-
-    /**
-     * 月
-     *
-     * @return 月
-     */
-    fun getMonth(): Int {
-        return month.getMonth()
-    }
-
-    /**
-     * 索引
-     *
-     * @return 索引，0-5
-     */
-    fun getIndex(): Int {
-        return index
+        return SolarMonth.fromYm(year, month)
     }
 
     /**
@@ -80,7 +36,7 @@ class SolarWeek(
         var i = 0
         val firstDay: SolarDay = getFirstDay()
         // 今年第1周
-        var w = SolarWeek(getYear(), 1, 0, start.getIndex())
+        var w = SolarWeek(year, 1, 0, start)
         while (w.getFirstDay() != firstDay) {
             w = w.next(1)
             i++
@@ -88,49 +44,39 @@ class SolarWeek(
         return i
     }
 
-    /**
-     * 起始星期
-     *
-     * @return 星期
-     */
-    fun getStart(): Week {
-        return start
-    }
-
     override fun getName(): String {
         return NAMES[index]
     }
 
     override fun toString(): String {
-        return month.toString() + getName()
+        return getSolarMonth().toString() + getName()
     }
 
     override fun next(n: Int): SolarWeek {
-        val startIndex: Int = start.getIndex()
         var d = index
-        var m: SolarMonth = month
+        var m: SolarMonth = getSolarMonth()
         if (n > 0) {
             d += n
-            var weekCount: Int = m.getWeekCount(startIndex)
+            var weekCount: Int = m.getWeekCount(start)
             while (d >= weekCount) {
                 d -= weekCount
                 m = m.next(1)
-                if (SolarDay(m.getYear(), m.getMonth(), 1).getWeek() != start) {
+                if (m.getFirstDay().getWeek().getIndex() != start) {
                     d += 1
                 }
-                weekCount = m.getWeekCount(startIndex)
+                weekCount = m.getWeekCount(start)
             }
         } else if (n < 0) {
             d += n
             while (d < 0) {
-                if (SolarDay(m.getYear(), m.getMonth(), 1).getWeek() != start) {
+                if (m.getFirstDay().getWeek().getIndex() != start) {
                     d -= 1
                 }
                 m = m.next(-1)
-                d += m.getWeekCount(startIndex)
+                d += m.getWeekCount(start)
             }
         }
-        return SolarWeek(m.getYear(), m.getMonth(), d, startIndex)
+        return SolarWeek(m.year, m.month, d, start)
     }
 
     /**
@@ -139,8 +85,8 @@ class SolarWeek(
      * @return 公历日
      */
     fun getFirstDay(): SolarDay {
-        val firstDay = SolarDay(getYear(), getMonth(), 1)
-        return firstDay.next(index * 7 - indexOf(firstDay.getWeek().getIndex() - start.getIndex(), 7))
+        val firstDay = SolarDay(year, month, 1)
+        return firstDay.next(index * 7 - indexOf(firstDay.getWeek().getIndex() - start, 7))
     }
 
     /**
@@ -168,6 +114,15 @@ class SolarWeek(
 
     companion object {
         val NAMES: Array<String> = arrayOf("第一周", "第二周", "第三周", "第四周", "第五周", "第六周")
+
+        @JvmStatic
+        fun validate(year: Int, month: Int, index: Int, start: Int) {
+            validate(index, start)
+            val m = SolarMonth(year, month)
+            if (index >= m.getWeekCount(start)) {
+                throw IllegalArgumentException("illegal solar week index: $index in month: $m")
+            }
+        }
 
         @JvmStatic
         fun fromYm(year: Int, month: Int, index: Int, start: Int): SolarWeek {

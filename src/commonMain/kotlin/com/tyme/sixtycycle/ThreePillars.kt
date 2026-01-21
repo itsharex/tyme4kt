@@ -95,7 +95,7 @@ class ThreePillars: AbstractCulture {
                 term = term.next(m)
             }
             var solarDay: SolarDay = term.getSolarDay()
-            if (solarDay.getYear() >= startYear) {
+            if (solarDay.year >= startYear) {
                 // 日干支和节令干支的偏移值
                 val d: Int = day.next(-solarDay.getLunarDay().getSixtyCycle().getIndex()).getIndex()
                 if (d > 0) {

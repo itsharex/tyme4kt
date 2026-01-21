@@ -1,11 +1,11 @@
 package com.tyme.solar
 
-import com.tyme.AbstractTyme
 import com.tyme.culture.Phase
 import com.tyme.culture.phenology.Phenology
 import com.tyme.jd.JulianDay
 import com.tyme.lunar.LunarHour
 import com.tyme.sixtycycle.SixtyCycleHour
+import com.tyme.unit.SecondUnit
 import com.tyme.util.pad2
 import kotlin.jvm.JvmStatic
 
@@ -16,28 +16,16 @@ import kotlin.jvm.JvmStatic
  * @author 6tail
  */
 class SolarTime(
-    /** 年 */
     year: Int,
-    /** 月 */
     month: Int,
-    /** 日 */
     day: Int,
-    /** 时 */
-    private var hour: Int,
-    /** 分 */
-    private var minute: Int,
-    /** 秒 */
-    private var second: Int
-) : AbstractTyme() {
-
-    /** 公历日 */
-    private var day: SolarDay
+    hour: Int,
+    minute: Int,
+    second: Int
+) : SecondUnit(year, month, day, hour, minute, second) {
 
     init {
-        require(hour in 0 .. 23) { "illegal hour: $hour" }
-        require(minute in 0 .. 59) { "illegal minute: $minute" }
-        require(second in 0 .. 59) { "illegal second: $second" }
-        this.day = SolarDay(year, month, day)
+        validate(year, month, day, hour, minute, second)
     }
 
     /**
@@ -46,61 +34,7 @@ class SolarTime(
      * @return 公历日
      */
     fun getSolarDay(): SolarDay{
-        return day
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return day.getYear()
-    }
-
-    /**
-     * 月
-     *
-     * @return 月
-     */
-    fun getMonth(): Int {
-        return day.getMonth()
-    }
-
-    /**
-     * 日
-     *
-     * @return 日
-     */
-    fun getDay(): Int {
-        return day.getDay()
-    }
-
-    /**
-     * 时
-     *
-     * @return 时
-     */
-    fun getHour(): Int {
-        return hour
-    }
-
-    /**
-     * 分
-     *
-     * @return 分
-     */
-    fun getMinute(): Int {
-        return minute
-    }
-
-    /**
-     * 秒
-     *
-     * @return 秒
-     */
-    fun getSecond(): Int {
-        return second
+        return SolarDay.fromYmd(year, month, day)
     }
 
     override fun getName(): String {
@@ -108,7 +42,7 @@ class SolarTime(
     }
 
     override fun toString(): String {
-        return "$day ${getName()}"
+        return "${getSolarDay()} ${getName()}"
     }
 
     /**
@@ -119,7 +53,7 @@ class SolarTime(
      */
     override fun next(n: Int): SolarTime {
         if (n == 0) {
-            return SolarTime(getYear(), getMonth(), getDay(), hour, minute, second)
+            return SolarTime(year, month, day, hour, minute, second)
         }
         var ts: Int = second + n
         var tm: Int = minute + ts / 60
@@ -141,8 +75,8 @@ class SolarTime(
             td -= 1
         }
 
-        val d: SolarDay = day.next(td)
-        return SolarTime(d.getYear(), d.getMonth(), d.getDay(), th, tm, ts)
+        val d: SolarDay = getSolarDay().next(td)
+        return SolarTime(d.year, d.month, d.day, th, tm, ts)
     }
 
     /**
@@ -152,13 +86,15 @@ class SolarTime(
      * @return true/false
      */
     fun isBefore(target: SolarTime): Boolean {
-        if (day != target.getSolarDay()) {
-            return day.isBefore(target.getSolarDay())
+        val aDay = getSolarDay()
+        val bDay = target.getSolarDay()
+        if (aDay != bDay) {
+            return aDay.isBefore(bDay)
         }
-        if (hour != target.getHour()) {
-            return hour < target.getHour()
+        if (hour != target.hour) {
+            return hour < target.hour
         }
-        return if (minute != target.getMinute()) minute < target.getMinute() else second < target.getSecond()
+        return if (minute != target.minute) minute < target.minute else second < target.second
     }
 
     /**
@@ -168,13 +104,15 @@ class SolarTime(
      * @return true/false
      */
     fun isAfter(target: SolarTime): Boolean {
-        if (day != target.getSolarDay()) {
-            return day.isAfter(target.getSolarDay())
+        val aDay = getSolarDay()
+        val bDay = target.getSolarDay()
+        if (aDay != bDay) {
+            return aDay.isAfter(bDay)
         }
-        if (hour != target.getHour()) {
-            return hour > target.getHour()
+        if (hour != target.hour) {
+            return hour > target.hour
         }
-        return if (minute != target.getMinute()) minute > target.getMinute() else second > target.getSecond()
+        return if (minute != target.minute) minute > target.minute else second > target.second
     }
 
     /**
@@ -183,7 +121,7 @@ class SolarTime(
      * @return 节气
      */
     fun getTerm(): SolarTerm {
-        var term: SolarTerm = day.getTerm()
+        var term: SolarTerm = getSolarDay().getTerm()
         if (isBefore(term.getJulianDay().getSolarTime())) {
             term = term.next(-1)
         }
@@ -196,7 +134,7 @@ class SolarTime(
      * @return 候
      */
     fun getPhenology(): Phenology {
-        var p: Phenology = day.getPhenology()
+        var p: Phenology = getSolarDay().getPhenology()
         if (isBefore(p.getJulianDay().getSolarTime())) {
             p = p.next(-1)
         }
@@ -209,7 +147,7 @@ class SolarTime(
      * @return 儒略日
      */
     fun getJulianDay(): JulianDay {
-        return JulianDay.fromYmdHms(day.getYear(), day.getMonth(), day.getDay(), hour, minute, second)
+        return JulianDay.fromYmdHms(year, month, day, hour, minute, second)
     }
 
     /**
@@ -219,9 +157,9 @@ class SolarTime(
      * @return 秒数
      */
     fun subtract(target: SolarTime): Int {
-        var days = day.subtract(target.getSolarDay())
+        var days = getSolarDay().subtract(target.getSolarDay())
         val cs: Int = hour * 3600 + minute * 60 + second
-        val ts: Int = target.getHour() * 3600 + target.getMinute() * 60 + target.getSecond()
+        val ts: Int = target.hour * 3600 + target.minute * 60 + target.second
         var seconds: Int = cs - ts
         if (seconds < 0) {
             seconds += 86400
@@ -237,8 +175,8 @@ class SolarTime(
      * @return 农历时辰
      */
     fun getLunarHour(): LunarHour {
-        val d = day.getLunarDay()
-        return LunarHour(d.getYear(), d.getMonth(), d.getDay(), hour, minute, second)
+        val d = getSolarDay().getLunarDay()
+        return LunarHour(d.year, d.month, d.day, hour, minute, second)
     }
 
     /**
@@ -257,7 +195,7 @@ class SolarTime(
      */
     fun getPhase(): Phase {
         val month = getLunarHour().getLunarDay().getLunarMonth().next(1)
-        var p = Phase.fromIndex(month.getYear(), month.getMonthWithLeap(), 0)
+        var p = Phase.fromIndex(month.year, month.getMonthWithLeap(), 0)
         while (p.getSolarTime().isAfter(this)) {
             p = p.next(-1)
         }
@@ -273,6 +211,12 @@ class SolarTime(
     }
 
     companion object {
+        @JvmStatic
+        fun validate(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) {
+            validate(hour, minute, second)
+            SolarDay.validate(year, month, day)
+        }
+
         @JvmStatic
         fun fromYmdHms(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int): SolarTime {
             return SolarTime(year, month, day, hour, minute, second)

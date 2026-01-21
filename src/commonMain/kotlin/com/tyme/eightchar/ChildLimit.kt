@@ -159,7 +159,7 @@ class ChildLimit (birthTime: SolarTime, private var gender: Gender) {
      * @return 干支年
      */
     fun getStartSixtyCycleYear(): SixtyCycleYear {
-        return SixtyCycleYear(getStartTime().getYear())
+        return SixtyCycleYear(getStartTime().year)
     }
 
     /**
@@ -168,7 +168,7 @@ class ChildLimit (birthTime: SolarTime, private var gender: Gender) {
      * @return 干支年
      */
     fun getEndSixtyCycleYear(): SixtyCycleYear {
-        return SixtyCycleYear(getEndTime().getYear())
+        return SixtyCycleYear(getEndTime().year)
     }
 
     /**

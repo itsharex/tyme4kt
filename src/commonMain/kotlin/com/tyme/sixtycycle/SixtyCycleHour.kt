@@ -30,16 +30,16 @@ class SixtyCycleHour(
     private var hour: SixtyCycle
 
     init {
-        val solarYear: Int = solarTime.getYear()
+        val solarYear: Int = solarTime.year
         val springSolarTime: SolarTime = SolarTerm(solarYear, 3).getJulianDay().getSolarTime()
         val lunarHour: LunarHour = solarTime.getLunarHour()
         val lunarDay: LunarDay = lunarHour.getLunarDay()
         var lunarYear: LunarYear = lunarDay.getLunarMonth().getLunarYear()
-        if (lunarYear.getYear() == solarYear) {
+        if (lunarYear.year == solarYear) {
             if (solarTime.isBefore(springSolarTime)) {
                 lunarYear = lunarYear.next(-1)
             }
-        } else if (lunarYear.getYear() < solarYear) {
+        } else if (lunarYear.year < solarYear) {
             if (!solarTime.isBefore(springSolarTime)) {
                 lunarYear = lunarYear.next(1)
             }
@@ -53,10 +53,10 @@ class SixtyCycleHour(
         this.day = SixtyCycleDay(
             solarTime.getSolarDay(),
             SixtyCycleMonth(
-                SixtyCycleYear(lunarYear.getYear()),
+                SixtyCycleYear(lunarYear.year),
                 LunarMonth.fromYm(solarYear, 1).getSixtyCycle().next(floor(index * 0.5).toInt())
             ),
-            if(solarTime.getHour() < 23) d else d.next(1))
+            if(solarTime.hour < 23) d else d.next(1))
         this.hour = lunarHour.getSixtyCycle()
     }
 
@@ -120,7 +120,7 @@ class SixtyCycleHour(
     }
 
     override fun toString(): String {
-        return "${day}${getName()}"
+        return "$day${getName()}"
     }
 
     /**
@@ -129,7 +129,7 @@ class SixtyCycleHour(
      * @return 索引
      */
     fun getIndexInDay(): Int {
-        val h: Int = solarTime.getHour()
+        val h: Int = solarTime.hour
         return if(h == 23) 0 else ((h + 1) / 2)
     }
 
@@ -140,7 +140,7 @@ class SixtyCycleHour(
      */
     fun getNineStar(): NineStar {
         val solar: SolarDay = solarTime.getSolarDay()
-        val dongZhi = SolarTerm(solar.getYear(), 0)
+        val dongZhi = SolarTerm(solar.year, 0)
         val earthBranchIndex: Int = getIndexInDay() % 12
         var index: Int = intArrayOf(8, 5, 2)[getDay().getEarthBranch().getIndex() % 3]
         if (!solar.isBefore(dongZhi.getJulianDay().getSolarDay()) && solar.isBefore(dongZhi.next(12).getJulianDay().getSolarDay())) {

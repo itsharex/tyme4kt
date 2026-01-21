@@ -1,7 +1,6 @@
 package com.tyme.lunar
 
-import com.tyme.AbstractTyme
-import com.tyme.culture.Week
+import com.tyme.unit.WeekUnit
 import kotlin.jvm.JvmStatic
 
 /**
@@ -12,22 +11,11 @@ import kotlin.jvm.JvmStatic
 class LunarWeek(
     year: Int,
     month: Int,
-    /** 索引，0-5 */
-    private var index: Int,
+    index: Int,
     start: Int
-) : AbstractTyme() {
-    /** 月 */
-    private var month: LunarMonth
-    /** 起始星期 */
-    private var start: Week
-
+) : WeekUnit(year, month, index, start) {
     init {
-        require(index in 0..5) { "illegal lunar week index: $index" }
-        require(start in 0..6) { "illegal lunar week start: $start" }
-        val m: LunarMonth = LunarMonth.fromYm(year, month)
-        require(index < m.getWeekCount(start)) { "illegal lunar week index: $index in month: $m" }
-        this.month = m
-        this.start = Week(start)
+        validate(year, month, index, start)
     }
 
     /**
@@ -36,43 +24,7 @@ class LunarWeek(
      * @return 农历月
      */
     fun getLunarMonth(): LunarMonth{
-        return month
-    }
-
-    /**
-     * 年
-     *
-     * @return 年
-     */
-    fun getYear(): Int {
-        return month.getYear()
-    }
-
-    /**
-     * 月
-     *
-     * @return 月
-     */
-    fun getMonth(): Int {
-        return month.getMonthWithLeap()
-    }
-
-    /**
-     * 索引
-     *
-     * @return 索引，0-5
-     */
-    fun getIndex(): Int {
-        return index
-    }
-
-    /**
-     * 起始星期
-     *
-     * @return 星期
-     */
-    fun getStart(): Week {
-        return start
+        return LunarMonth(year, month)
     }
 
     override fun getName(): String {
@@ -80,36 +32,35 @@ class LunarWeek(
     }
 
     override fun toString(): String {
-        return "${month}${getName()}"
+        return "${getLunarMonth()}${getName()}"
     }
 
     override fun next(n: Int): LunarWeek {
-        val startIndex: Int = start.getIndex()
         if (n == 0) {
-            return LunarWeek(getYear(), getMonth(), index, startIndex)
+            return LunarWeek(year, month, index, start)
         }
         var d: Int = index + n
-        var m: LunarMonth = month
+        var m: LunarMonth = getLunarMonth()
         if (n > 0) {
-            var weekCount: Int = m.getWeekCount(startIndex)
+            var weekCount: Int = m.getWeekCount(start)
             while (d >= weekCount) {
                 d -= weekCount
                 m = m.next(1)
-                if (LunarDay(m.getYear(), m.getMonthWithLeap(), 1).getWeek() != start) {
+                if (m.getFirstDay().getWeek().getIndex() != start) {
                     d += 1
                 }
-                weekCount = m.getWeekCount(startIndex)
+                weekCount = m.getWeekCount(start)
             }
         } else {
             while (d < 0) {
-                if (LunarDay(m.getYear(), m.getMonthWithLeap(), 1).getWeek() != start) {
+                if (m.getFirstDay().getWeek().getIndex() != start) {
                     d -= 1
                 }
                 m = m.next(-1)
-                d += m.getWeekCount(startIndex)
+                d += m.getWeekCount(start)
             }
         }
-        return LunarWeek(m.getYear(), m.getMonthWithLeap(), d, startIndex)
+        return LunarWeek(m.year, m.getMonthWithLeap(), d, start)
     }
 
     /**
@@ -118,8 +69,8 @@ class LunarWeek(
      * @return 农历日
      */
     fun getFirstDay(): LunarDay {
-        val firstDay = LunarDay(getYear(), getMonth(), 1)
-        return firstDay.next(index * 7 - indexOf(firstDay.getWeek().getIndex() - start.getIndex(), 7))
+        val firstDay = LunarDay(year, month, 1)
+        return firstDay.next(index * 7 - indexOf(firstDay.getWeek().getIndex() - start, 7))
     }
 
     /**
@@ -147,6 +98,15 @@ class LunarWeek(
 
     companion object {
         val NAMES: Array<String> = arrayOf("第一周", "第二周", "第三周", "第四周", "第五周", "第六周")
+
+        @JvmStatic
+        fun validate(year: Int, month: Int, index: Int, start: Int) {
+            validate(index, start)
+            val m = LunarMonth(year, month)
+            if (index >= m.getWeekCount(start)) {
+                throw IllegalArgumentException("illegal lunar week index: $index in month: $m")
+            }
+        }
 
         @JvmStatic
         fun fromYm(year: Int, month: Int, index: Int, start: Int): LunarWeek {

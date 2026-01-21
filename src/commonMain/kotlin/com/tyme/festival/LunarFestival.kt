@@ -75,7 +75,7 @@ class LunarFestival(
     override fun next(n: Int): LunarFestival? {
         val size = NAMES.size
         val i = index + n
-        return fromIndex((day.getYear() * size + i) / size, indexOf(i, size))
+        return fromIndex((day.year * size + i) / size, indexOf(i, size))
     }
 
     override fun equals(other: Any?): Boolean {
@@ -153,7 +153,7 @@ class LunarFestival(
                 val data: String = match.value
                 val solarTerm = SolarTerm(year, data.substring(4).toInt(10))
                 val lunarDay = solarTerm.getSolarDay().getLunarDay()
-                if (lunarDay.getYear() == year && lunarDay.getMonth() == month && lunarDay.getDay() == day) {
+                if (lunarDay.year == year && lunarDay.month == month && lunarDay.day == day) {
                     return LunarFestival(FestivalType.TERM, lunarDay, solarTerm, data)
                 }
             }
@@ -161,7 +161,7 @@ class LunarFestival(
             if (matchResult != null) {
                 val lunarDay = LunarDay(year, month, day)
                 val nextDay = lunarDay.next(1)
-                if (nextDay.getMonth() == 1 && nextDay.getDay() == 1) {
+                if (nextDay.month == 1 && nextDay.day == 1) {
                     return LunarFestival(
                         FestivalType.EVE,
                         lunarDay,
