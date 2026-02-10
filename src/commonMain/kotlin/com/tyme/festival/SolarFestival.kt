@@ -76,13 +76,23 @@ class SolarFestival(
         return fromIndex((day.year * size + i) / size, indexOf(i, size))
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is SolarFestival && toString() == other.toString()
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+
     companion object {
         val NAMES: Array<String> = arrayOf("元旦", "三八妇女节", "植树节", "五一劳动节", "五四青年节", "六一儿童节", "建党节", "八一建军节", "教师节", "国庆节")
         var DATA: String = "@00001011950@01003081950@02003121979@03005011950@04005041950@05006011950@06007011941@07008011933@08009101985@09010011950"
 
         @JvmStatic
         fun fromIndex(year: Int, index: Int): SolarFestival? {
-            require(index in NAMES.indices) { "illegal index: $index" }
+            if (index < 0 || index >= NAMES.size) {
+                return null
+            }
             val matchResult = Regex("@${index.pad2()}\\d+").find(DATA)
             if (matchResult != null) {
                 val data: String = matchResult.value

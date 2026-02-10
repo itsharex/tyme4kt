@@ -92,7 +92,9 @@ class LunarFestival(
 
         @JvmStatic
         fun fromIndex(year: Int, index: Int): LunarFestival? {
-            require(!(index < 0 || index >= NAMES.size)) { "illegal index: $index" }
+            if (index < 0 || index >= NAMES.size) {
+                return null
+            }
             val regex = Regex("@${index.pad2()}\\d+")
             val matchResult = regex.find(DATA)
             if (matchResult != null) {
@@ -147,27 +149,30 @@ class LunarFestival(
                     matchResult.value
                 )
             }
+            val lunarDay = LunarDay(year, month, day)
+            val solarDay = lunarDay.getSolarDay()
             val regex = Regex("@\\d{2}1\\d{2}")
             val matches = regex.findAll(DATA)
             for (match in matches) {
                 val data: String = match.value
-                val solarTerm = SolarTerm(year, data.substring(4).toInt(10))
-                val lunarDay = solarTerm.getSolarDay().getLunarDay()
-                if (lunarDay.year == year && lunarDay.month == month && lunarDay.day == day) {
-                    return LunarFestival(FestivalType.TERM, lunarDay, solarTerm, data)
+                val term = SolarTerm(year, data.substring(4).toInt(10))
+                val termDay = term.getSolarDay()
+                if (termDay.year == solarDay.year && termDay.month == solarDay.month && termDay.day == solarDay.day) {
+                    return LunarFestival(FestivalType.TERM, lunarDay, term, data)
                 }
             }
-            matchResult = Regex("@\\d{2}2").find(DATA)
-            if (matchResult != null) {
-                val lunarDay = LunarDay(year, month, day)
-                val nextDay = lunarDay.next(1)
-                if (nextDay.month == 1 && nextDay.day == 1) {
-                    return LunarFestival(
-                        FestivalType.EVE,
-                        lunarDay,
-                        null,
-                        matchResult.value
-                    )
+            if (month == 12 && day > 28) {
+                matchResult = Regex("@\\d{2}2").find(DATA)
+                if (matchResult != null) {
+                    val nextDay = lunarDay.next(1)
+                    if (nextDay.month == 1 && nextDay.day == 1) {
+                        return LunarFestival(
+                            FestivalType.EVE,
+                            lunarDay,
+                            null,
+                            matchResult.value
+                        )
+                    }
                 }
             }
             return null
